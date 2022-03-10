@@ -97,6 +97,19 @@ def get_extensions():
                 "-ffast-math", "-msse", "-msse2", "-msse3", "-msse4.2"
             ]
         ),
+        Extension(
+            "mesh_fusion.external.libfusiongpu.cyfusion",
+            sources=[
+                "mesh_fusion/external/libfusiongpu/cyfusion.pyx",
+            ],
+            language="c++",
+            library_dirs=["mesh_fusion/external/libfusiongpu/build/"],
+            libraries=["m", "fusion_gpu"],
+            include_dirs=[np.get_include()],
+            extra_compile_args=[
+                "-ffast-math", "-msse", "-msse2", "-msse3", "-msse4.2"
+            ]
+        ),
     ])
 
 
