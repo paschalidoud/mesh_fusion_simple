@@ -37,13 +37,66 @@ def collect_metadata():
 
 
 def get_extensions():
+    extra_compile_args = [
+        "-ffast-math",
+        "-msse",
+        "-msse2",
+        "-msse3",
+        "-msse4.2",
+        "-O4",
+        "-fopenmp"
+    ]
+    extra_link_args = [
+        "-lGLEW",
+        "-lglut",
+        "-lGL",
+        "-lGLU",
+        "-fopenmp"
+    ]
     return cythonize([
         Extension(
             "mesh_fusion.external.libmesh.triangle_hash",
             sources=["mesh_fusion/external/libmesh/triangle_hash.pyx"],
             include_dirs=[np.get_include()],
             libraries=["m"]  # Unix-like specific
-        )
+        ),
+        Extension(
+            "mesh_fusion.external.librender.pyrender",
+            sources=[
+                "mesh_fusion/external/librender/pyrender.pyx",
+                "mesh_fusion/external/librender/offscreen.cpp"
+            ],
+            language="c++",
+            include_dirs=[np.get_include()],
+            extra_compile_args=extra_compile_args,
+            extra_link_args=extra_link_args,
+            libraries=["m"]  # Unix-like specific
+        ),
+        Extension(
+            "mesh_fusion.external.libmcubes.mcubes",
+            sources=[
+                "mesh_fusion/external/libmcubes/mcubes.pyx",
+                "mesh_fusion/external/libmcubes/pywrapper.cpp",
+                "mesh_fusion/external/libmcubes/marchingcubes.cpp"
+            ],
+            language="c++",
+            include_dirs=[np.get_include()],
+            extra_compile_args=["-std=c++11"],
+            libraries=["m"]  # Unix-like specific
+        ),
+        Extension(
+            "mesh_fusion.external.libfusioncpu.cyfusion",
+            sources=[
+                "mesh_fusion/external/libfusioncpu/cyfusion.pyx",
+            ],
+            language="c++",
+            library_dirs=["mesh_fusion/external/libfusioncpu/build/"],
+            libraries=["m", "fusion_cpu"],
+            include_dirs=[np.get_include()],
+            extra_compile_args=[
+                "-ffast-math", "-msse", "-msse2", "-msse3", "-msse4.2"
+            ]
+        ),
     ])
 
 
@@ -51,6 +104,7 @@ def get_install_requirements():
     return [
         "numpy",
         "cython",
+        "pycollada",
         "Pillow",
         "trimesh",
         "tqdm"
