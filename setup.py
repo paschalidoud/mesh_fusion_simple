@@ -8,6 +8,7 @@ from os import path
 import numpy as np
 
 from Cython.Build import cythonize
+from Cython.Distutils import build_ext
 from distutils.extension import Extension
 
 
@@ -94,22 +95,23 @@ def get_extensions():
             libraries=["m", "fusion_cpu"],
             include_dirs=[np.get_include()],
             extra_compile_args=[
-                "-ffast-math", "-msse", "-msse2", "-msse3", "-msse4.2"
-            ]
-        ),
-        Extension(
-            "mesh_fusion.external.libfusiongpu.cyfusion",
-            sources=[
-                "mesh_fusion/external/libfusiongpu/cyfusion.pyx",
+                "-fopenmp", "-ffast-math", "-msse", "-msse2", "-msse3", "-msse4.2"
             ],
-            language="c++",
-            library_dirs=["mesh_fusion/external/libfusiongpu/build/"],
-            libraries=["m", "fusion_gpu"],
-            include_dirs=[np.get_include()],
-            extra_compile_args=[
-                "-ffast-math", "-msse", "-msse2", "-msse3", "-msse4.2"
-            ]
+            extra_link_args=["-fopenmp"]
         ),
+        #Extension(
+        #    "mesh_fusion.external.libfusiongpu.cyfusion",
+        #    sources=[
+        #        "mesh_fusion/external/libfusiongpu/cyfusion.pyx",
+        #    ],
+        #    language="c++",
+        #    library_dirs=["mesh_fusion/external/libfusiongpu/build/"],
+        #    libraries=["m", "fusion_gpu"],
+        #    include_dirs=[np.get_include()],
+        #    extra_compile_args=[
+        #        "-ffast-math", "-msse", "-msse2", "-msse3", "-msse4.2"
+        #    ]
+        #),
     ])
 
 
@@ -129,6 +131,7 @@ def setup_package():
     meta = collect_metadata()
     setup(
         name="mesh_fusion",
+        cmdclass={"build_ext": build_ext},
         version=meta["version"],
         description=meta["description"],
         long_description=long_description,

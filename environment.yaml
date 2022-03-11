@@ -12,5 +12,6 @@ dependencies:
   - tqdm=4.50.2
   - trimesh=3.8.10
   - wxpython=4.0.7
+  - pip
   - pip:
     - simple_3dviz==0.2.1
