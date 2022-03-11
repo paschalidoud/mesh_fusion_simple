@@ -32,6 +32,8 @@ This codebase has the following dependencies:
 - [numpy](https://numpy.org/doc/stable/user/install.html)
 - [cython](https://cython.readthedocs.io/en/latest/src/quickstart/build.html)
 - [pillow](https://pillow.readthedocs.io/en/stable/installation.html)
+- [pycollada](https://pycollada.readthedocs.io/en/latest/install.html)
+- [scipy](https://scipy.org/install/)
 - [trimesh](https://github.com/mikedh/trimesh)
 - [tqdm](https://github.com/tqdm/tqdm)
 
@@ -53,4 +55,21 @@ Next compile the extenstion modules. You can do this via
 python setup.py build_ext --inplace
 pip install -e .
 ```
- 
+
+## Convert to watertight meshes
+
+To run our code, we provide the `convert_to_watertight.py` script. In order to
+run this script you only need to provide a path to the dataset directory, as
+well as the dataset type, namely ShapeNet, Dynamic FAUST etc. For now our code
+supports the ShapeNet dataset, the Dynamic FAUST and the FreiHAND dataset. If
+you want to use another dataset, you simply need to implement a Dataset class
+that extends the `ModelCollection` class. For more details please refer to the
+`mesh_fusion/datasets/model_collections.py` file. To run the conversion script
+simply run
+```
+python convert_to_watertight.py path_to_dataset_directory --dataset_type dataset_type
+```
+Currently, our code only runs on CPU. However, you can lauch this script from
+multiple CPU nodes in order to speed up the computation time. This script
+automatically checks whether a model has already been converted before initiating
+the transformation process.
