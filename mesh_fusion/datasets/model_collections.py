@@ -259,7 +259,7 @@ class MultiModelsShapeNetV1(ModelCollection):
         @property
         def path_to_mesh_file(self):
             return os.path.join(self._base_dir, self._category, self._model,
-                                "model.off")
+                                "model.obj")
 
         @property
         def path_to_watertight_mesh_file(self):
@@ -382,7 +382,7 @@ class ModelCollectionBuilder(object):
         return self
 
     def build(self, base_dir):
-        dataset = self._dataset_class(base_dir)))
+        dataset = self._dataset_class(base_dir)
         if self._cache_meshes:
             dataset = MeshCache(dataset)
         if self._lru_cache > 0:

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Script for converting non-watertight meshes to watertight meshes.
 """
 import argparse
@@ -10,7 +11,7 @@ from tqdm import tqdm
 import trimesh
 
 from mesh_fusion.datasets import ModelCollectionBuilder
-from mesh_fusion.datasets import TSDFFusion
+from mesh_fusion.fusion import TSDFFusion
 
 
 def ensure_parent_directory_exists(filepath):
@@ -90,16 +91,17 @@ def main(argv):
         default=0.1,
         help="Relative padding applied on each side of the mesh during scaling"
     )
+    parser.add_argument(
+        "--path_to_simplification_script",
+        default="simplification.mlx",
+        help="Script to be used for mesh simplification"
+    )
 
     args = parser.parse_args(argv)
 
     dataset = (
-        ModelCollectionBuilder(config)
+        ModelCollectionBuilder()
         .with_dataset(args.dataset_type)
-        .filter_train_test(
-            splits_factory(args.dataset_type)(args.train_test_splits_file),
-            ["train", "test", "val"]
-         )
         .filter_category_tags(args.category_tags)
         .filter_tags(args.model_tags)
         .build(args.dataset_directory)
@@ -122,12 +124,30 @@ def main(argv):
                 continue
             if os.path.exists(path_to_file):
                 continue
+            print(path_to_file)
             # Scale the mesh to range [-0.5,0.5]^3
-            raw_mesh = sample.groundtruth_mesh.to_unit_cube()
-            # Make the mesh watertight with TSDF Fusion
-            tsdf_fuser.make_watertight(raw_mesh, path_to_file)
-            # Call the meshlabserver to simplify the mesh
+            raw_mesh = sample.groundtruth_mesh
+            raw_mesh.to_unit_cube()
+            # Extract the points and the faces from the raw_mesh
+            points, faces = raw_mesh.to_points_and_faces()
 
+            tr_mesh = trimesh.Trimesh(vertices=points, faces=faces)
+            # Make the mesh watertight with TSDF Fusion
+            tr_mesh_watertight = tsdf_fuser.to_watertight(
+                tr_mesh, path_to_file
+            )
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+            # Call the meshlabserver to simplify the mesh
+            simplification_script = os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                args.path_to_simplification_script
+            )
+            os.system('meshlabserver -i %s -o %s -s %s' % (
+                path_to_file,
+                path_to_file,
+                simplification_script
+            ))
+        break            
 
 
 if __name__ == "__main__":

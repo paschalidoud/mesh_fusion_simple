@@ -1,8 +1,13 @@
 import math
 import numpy as np
+from scipy import ndimage
 
-from .external.librender import librender
-from .external.libmcubes import libmcubes
+import trimesh
+
+from .external.librender import pyrender
+from .external.libmcubes import mcubes
+from .external.libfusioncpu import cyfusion as libfusion
+from .external.libfusioncpu.cyfusion import tsdf_cpu as compute_tsdf
 
 from .utils import write_hdf5, read_hdf5
 
@@ -21,8 +26,8 @@ class TSDFFusion:
         principal_point_x=320,
         principal_point_y=320,
         resolution=256,
-        truncation_factor=10,
-        n_views=10,
+        truncation_factor=15,
+        n_views=100,
         depth_offset_factor=1.5
     ):
         self.fx = focal_length_x
@@ -37,7 +42,7 @@ class TSDFFusion:
         self.depth_offset_factor = depth_offset_factor
 
         self.render_intrinsics = np.array([
-            self.fx, self.fy, self.ppx, self.ppx
+            self.fx, self.fy, self.ppx, self.ppy
         ], dtype=float)
         # Essentially the same as above, just a slightly different format.
         self.fusion_intrisics = np.array([
@@ -127,7 +132,7 @@ class TSDFFusion:
             np_faces = mesh.faces.astype(np.float64)
             np_faces += 1
 
-            depthmap, mask, img = librender.render(
+            depthmap, mask, img = pyrender.render(
                 np_vertices.copy(),
                 np_faces.T.copy(),
                 self.render_intrinsics,
@@ -143,7 +148,7 @@ class TSDFFusion:
             depthmap = ndimage.morphology.grey_erosion(depthmap, size=(3, 3))
             depthmaps.append(depthmap)
 
-        if args.output_path is not None:
+        if output_path is not None:
             write_hdf5(output_path, np.array(depthmaps))
         return depthmaps
 
@@ -174,23 +179,30 @@ class TSDFFusion:
         # libfusioncpu.tsdf_cpu!
         return compute_tsdf(
             views,
-            self.options.resolution,
-            self.options.resolution,
-            self.options.resolution,
+            self.resolution,
+            self.resolution,
+            self.resolution,
             self.voxel_size,
             self.truncation,
             False
         )
     
-    def make_watertight(self, mesh, output_path):
+    def to_watertight(self, mesh, output_path=None):
         # Get the views that we will use for the rendering
         Rs = self.get_views()
         # Render the depth maps
         depths = self.render(mesh, Rs)
-        tsdf = self.fusion(depths, Rs)
-        tsdf = tsdf[0]
-
-        vertices, triangles = libmcubes.marching_cubes(-tsdf, 0)
-        vertices /= self.options.resolution
+        tsdf = self.fusion(depths, Rs)[0]
+        # To ensure that the final mesh is indeed watertight
+        tsdf = np.pad(tsdf, 1, "constant", constant_values=1e6)
+        vertices, triangles = mcubes.marching_cubes(-tsdf, 0)
+        # Remove padding offset
+        vertices -= 1
+        # Normalize to [-0.5, 0.5]^3 cube
+        vertices /= self.resolution
         vertices -= 0.5
-        libmcubes.export_off(vertices, triangles, output_path)
+
+        tr_mesh = trimesh.Trimesh(vertices=vertices, faces=triangles)
+        if output_path is not None:
+            tr_mesh.export(output_path, "off")
+        return tr_mesh

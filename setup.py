@@ -89,10 +89,10 @@ def get_extensions():
             "mesh_fusion.external.libfusioncpu.cyfusion",
             sources=[
                 "mesh_fusion/external/libfusioncpu/cyfusion.pyx",
+                "mesh_fusion/external/libfusioncpu/fusion.cpp"
             ],
             language="c++",
-            library_dirs=["mesh_fusion/external/libfusioncpu/build/"],
-            libraries=["m", "fusion_cpu"],
+            libraries=["m"],
             include_dirs=[np.get_include()],
             extra_compile_args=[
                 "-fopenmp", "-ffast-math", "-msse", "-msse2", "-msse3", "-msse4.2"
@@ -118,11 +118,12 @@ def get_extensions():
 def get_install_requirements():
     return [
         "numpy",
+        "scipy",
         "cython",
         "pycollada",
         "Pillow",
         "trimesh",
-        "tqdm"
+        "tqdm",
     ]
 
 def setup_package():
