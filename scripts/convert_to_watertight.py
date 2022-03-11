@@ -2,7 +2,9 @@
 """Script for converting non-watertight meshes to watertight meshes.
 """
 import argparse
+import logging
 import os
+import subprocess
 import sys
 from tempfile import NamedTemporaryFile
 
@@ -98,6 +100,8 @@ def main(argv):
     )
 
     args = parser.parse_args(argv)
+    # Disable trimesh's logger
+    logging.getLogger("trimesh").setLevel(logging.ERROR)
 
     dataset = (
         ModelCollectionBuilder()
@@ -124,7 +128,6 @@ def main(argv):
                 continue
             if os.path.exists(path_to_file):
                 continue
-            print(path_to_file)
             # Scale the mesh to range [-0.5,0.5]^3
             raw_mesh = sample.groundtruth_mesh
             raw_mesh.to_unit_cube()
@@ -136,18 +139,15 @@ def main(argv):
             tr_mesh_watertight = tsdf_fuser.to_watertight(
                 tr_mesh, path_to_file
             )
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>")
             # Call the meshlabserver to simplify the mesh
             simplification_script = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 args.path_to_simplification_script
             )
-            os.system('meshlabserver -i %s -o %s -s %s' % (
-                path_to_file,
-                path_to_file,
-                simplification_script
-            ))
-        break            
+            subprocess.call([
+                "meshlabserver"
+                f" -i {path_to_file} -o {path_to_file} -s {simplification_script}",
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True)
 
 
 if __name__ == "__main__":
