@@ -15,10 +15,8 @@ class BaseModel(object):
        model has a unique model_tag, mesh_file and Mesh object. Optionally, it
        can also have a tsdf file.
     """
-    def __init__(self, tag, config):
+    def __init__(self, tag):
         self._tag = tag
-        self._config = config
-
         # Initialize the contents of this instance to empty so that they can be
         # lazy loaded
         self._gt_mesh = None
@@ -40,10 +38,7 @@ class BaseModel(object):
     @property
     def groundtruth_mesh(self):
         if self._gt_mesh is None:
-            self._gt_mesh = read_mesh_file(
-                self.path_to_mesh_file,
-                self._config["data"].get("normalize", True)
-            )
+            self._gt_mesh = read_mesh_file(self.path_to_mesh_file)
         return self._gt_mesh
 
     @groundtruth_mesh.setter
@@ -123,16 +118,10 @@ class CategorySubset(ModelSubset):
 
 class DynamicFaust(ModelCollection):
     class Model(BaseModel):
-        def __init__(self, base_dir, tag, config):
-            super(DynamicFaust.Model, self).__init__(tag, config)
+        def __init__(self, base_dir, tag):
+            super().__init__(tag)
             self._base_dir = base_dir
             self._category, self._sequence = tag.split(":")
-
-            config = config["data"]
-            self._mesh_folder = config["mesh_folder"]
-            self._points_folder = config["points_folder"]
-            self._surface_points_folder = config["surface_points_folder"]
-            self._renderings_folder = config["renderings_folder"]
 
         @property
         def category(self):
@@ -141,22 +130,20 @@ class DynamicFaust(ModelCollection):
         @property
         def path_to_mesh_file(self):
             return os.path.join(self._base_dir, self._category,
-                                self._mesh_folder, self._sequence+".obj")
+                                "mesh_seq", self._sequence+".obj")
         @property
         def image_paths(self):
             return [os.path.join(self._base_dir, self._category,
                                  self._renderings_folder,
                                  "{}.png".format(self._sequence))]
 
-    def __init__(self, base_dir, config):
+    def __init__(self, base_dir):
         self._base_dir = base_dir
-        self._config = config
         self._paths = sorted([
             d
             for d in os.listdir(self._base_dir)
             if os.path.isdir(os.path.join(self._base_dir, d))
         ])
-        mesh_folder = config["data"].get("mesh_folder", "mesh_seq_2")
 
         # Note that we filter out the first 20 meshes from the sequence to
         # "discard" the neutral pose that is used for calibration purposes.
@@ -172,13 +159,13 @@ class DynamicFaust(ModelCollection):
         return len(self._tags)
 
     def _get_model(self, i):
-        return self.Model(self._base_dir, self._tags[i], self._config)
+        return self.Model(self._base_dir, self._tags[i])
 
 
 class FreiHand(ModelCollection):
     class Model(BaseModel):
-        def __init__(self, base_dir, tag, config):
-            super().__init__(tag, config)
+        def __init__(self, base_dir, tag):
+            super().__init__(tag)
             self._base_dir = base_dir
 
         @property
@@ -193,9 +180,8 @@ class FreiHand(ModelCollection):
         def image_paths(self):
             return [os.path.join(self._base_dir, self.tag + ".png")]
 
-    def __init__(self, base_dir, config):
+    def __init__(self, base_dir):
         self._base_dir = base_dir
-        self._config = config
         self._tags = sorted([
             f[:-4]
             for f in os.listdir(self._base_dir)
@@ -206,13 +192,13 @@ class FreiHand(ModelCollection):
         return len(self._tags)
 
     def _get_model(self, i):
-        return self.Model(self._base_dir, self._tags[i], self._config)
+        return self.Model(self._base_dir, self._tags[i])
 
 
 class TurbosquidAnimal(ModelCollection):
     class Model(BaseModel):
-        def __init__(self, base_dir, tag, config):
-            super().__init__(tag, config)
+        def __init__(self, base_dir, tag):
+            super().__init__(tag)
             self._base_dir = base_dir
             self._tag = tag
 
@@ -226,9 +212,8 @@ class TurbosquidAnimal(ModelCollection):
         def image_paths(self):
             return [os.path.join(self._base_dir, self.tag, "image_00000.png")]
 
-    def __init__(self, base_dir, config):
+    def __init__(self, base_dir):
         self._base_dir = base_dir
-        self._config = config
 
         self._tags = sorted([
             fi for fi in os.listdir(self._base_dir)
@@ -241,18 +226,15 @@ class TurbosquidAnimal(ModelCollection):
         return len(self._tags)
 
     def _get_model(self, i):
-        return self.Model(self._base_dir, self._tags[i], self._config)
+        return self.Model(self._base_dir, self._tags[i])
 
 
 class MultiModelsShapeNetV1(ModelCollection):
     class Model(BaseModel):
-        def __init__(self, base_dir, tag, config):
-            super(MultiModelsShapeNetV1.Model, self).__init__(tag, config)
+        def __init__(self, base_dir, tag):
+            super().__init__(tag)
             self._base_dir = base_dir
             self._category, self._model = tag.split(":")
-            self._mesh_file = config["data"].get(
-                "mesh_file", "model_watertight.off"
-            )
 
         @property
         def category(self):
@@ -261,16 +243,15 @@ class MultiModelsShapeNetV1(ModelCollection):
         @property
         def path_to_mesh_file(self):
             return os.path.join(self._base_dir, self._category, self._model,
-                                self._mesh_file)
+                                "model_off")
 
         @property
         def images_dir(self):
             return os.path.join(self._base_dir, self._category, self._model,
                                 "img_choy2016")
 
-    def __init__(self, base_dir, config):
+    def __init__(self, base_dir):
         self._base_dir = base_dir
-        self._config = config
         self._models = sorted([
             d
             for d in os.listdir(self._base_dir)
@@ -289,7 +270,7 @@ class MultiModelsShapeNetV1(ModelCollection):
         return len(self._tags)
 
     def _get_model(self, i):
-        return self.Model(self._base_dir, self._tags[i], self._config)
+        return self.Model(self._base_dir, self._tags[i])
 
 
 class MeshCache(ModelCollection):
@@ -343,14 +324,13 @@ def model_factory(dataset_type):
 
 
 class ModelCollectionBuilder(object):
-    def __init__(self, config):
+    def __init__(self):
         self._dataset_class = None
         self._cache_meshes = False
         self._lru_cache = 0
         self._tags = []
         self._category_tags = []
         self._percentage = 1.0
-        self._config = config
 
     def with_dataset(self, dataset_type):
         self._dataset_class = model_factory(dataset_type)
@@ -381,7 +361,7 @@ class ModelCollectionBuilder(object):
         return self
 
     def build(self, base_dir):
-        dataset = self._dataset_class(base_dir, self._config)
+        dataset = self._dataset_class(base_dir)))
         if self._cache_meshes:
             dataset = MeshCache(dataset)
         if self._lru_cache > 0:
