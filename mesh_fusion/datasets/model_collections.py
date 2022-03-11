@@ -7,7 +7,7 @@ from collections import OrderedDict
 import os
 from PIL import Image
 
-from .mesh import read_mesh_file
+from simple_3dviz import Mesh
 
 
 class BaseModel(object):
@@ -32,13 +32,17 @@ class BaseModel(object):
         raise NotImplementedError()
 
     @property
+    def path_to_watertight_mesh_file(self):
+        raise NotImplementedError()
+
+    @property
     def images_dir(self):
         raise NotImplementedError()
 
     @property
     def groundtruth_mesh(self):
         if self._gt_mesh is None:
-            self._gt_mesh = read_mesh_file(self.path_to_mesh_file)
+            self._gt_mesh = Mesh.from_file(self.path_to_mesh_file)
         return self._gt_mesh
 
     @groundtruth_mesh.setter
@@ -132,6 +136,10 @@ class DynamicFaust(ModelCollection):
             return os.path.join(self._base_dir, self._category,
                                 "mesh_seq", self._sequence+".obj")
         @property
+        def path_to_watertight_mesh_file(self):
+            return os.path.join(self._base_dir, self._category,
+                                "watertight_mesh_seq", self._sequence+".obj")
+        @property
         def image_paths(self):
             return [os.path.join(self._base_dir, self._category,
                                  self._renderings_folder,
@@ -177,6 +185,10 @@ class FreiHand(ModelCollection):
             return os.path.join(self._base_dir, self.tag + ".obj")
 
         @property
+        def path_to_watertight_mesh_file(self):
+            return os.path.join(self._base_dir, self.tag + "_watertight.obj")
+
+        @property
         def image_paths(self):
             return [os.path.join(self._base_dir, self.tag + ".png")]
 
@@ -204,6 +216,10 @@ class TurbosquidAnimal(ModelCollection):
 
         @property
         def path_to_mesh_file(self):
+            return os.path.join(self._base_dir, self._tag, "model.off")
+
+        @property
+        def path_to_watertight_mesh_file(self):
             return os.path.join(
                 self._base_dir, self._tag, "model_watertight.off"
             )
@@ -243,7 +259,12 @@ class MultiModelsShapeNetV1(ModelCollection):
         @property
         def path_to_mesh_file(self):
             return os.path.join(self._base_dir, self._category, self._model,
-                                "model_off")
+                                "model.off")
+
+        @property
+        def path_to_watertight_mesh_file(self):
+            return os.path.join(self._base_dir, self._category, self._model,
+                                "model_watertight.off")
 
         @property
         def images_dir(self):
