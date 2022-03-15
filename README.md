@@ -74,3 +74,9 @@ Currently, our code only runs on CPU. However, you can lauch this script from
 multiple CPU nodes in order to speed up the computation time. This script
 automatically checks whether a model has already been converted before initiating
 the transformation process.
+
+In case you want to run this script at an Ubuntu machine, with no monitor, simply run
+```
+export DISPLAY=:1 && Xvfb :1 -screen 0 1024x768x16 &
+python convert_to_watertight.py path_to_dataset_directory --dataset_type dataset_type
+```
