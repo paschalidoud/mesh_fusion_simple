@@ -73,10 +73,11 @@ python convert_to_watertight.py path_to_dataset_directory --dataset_type dataset
 Currently, our code only runs on CPU. However, you can lauch this script from
 multiple CPU nodes in order to speed up the computation time. This script
 automatically checks whether a model has already been converted before initiating
-the transformation process.
-
-In case you want to run this script at an Ubuntu machine, with no monitor, simply run
+the transformation process. In case you want to run this script at an Ubuntu
+machine, with no monitor, simply run
 ```
-export DISPLAY=:1 && Xvfb :1 -screen 0 1024x768x16 &
-python convert_to_watertight.py path_to_dataset_directory --dataset_type dataset_type
+for i in {1..10}; do xvfb-run -a python convert_to_watertight.py /orion/u/paschald/Datasets/ShapeNetCore.v1/ --category_tags 02691156 --dataset_type shapenet_v1 & done
+wait
 ```
+This script launches 10 CPU jobs. However, you can launch more or less
+depending on the availability of your resources.
