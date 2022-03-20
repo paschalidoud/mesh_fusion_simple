@@ -81,3 +81,9 @@ wait
 ```
 This script launches 10 CPU jobs. However, you can launch more or less
 depending on the availability of your resources.
+
+You can also use the `make_mesh_watertight.py` script to convert a single mesh
+to a watertight mesh by specifying its path as follows
+```
+python make_mesh_watertight.py path_to_mesh path_to_output_directory
+```
