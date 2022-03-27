@@ -72,6 +72,7 @@ def main(argv):
             "shapenet_v1",
             "dynamic_faust",
             "freihand",
+            "3d_future"
         ],
         help="The type of the dataset type to be used"
     )
@@ -86,12 +87,6 @@ def main(argv):
         type=lambda x: x.split(","),
         default=[],
         help="Category tags to the models to be used"
-    )
-    parser.add_argument(
-        "--padding",
-        type=float,
-        default=0.1,
-        help="Relative padding applied on each side of the mesh during scaling"
     )
     parser.add_argument(
         "--path_to_simplification_script",

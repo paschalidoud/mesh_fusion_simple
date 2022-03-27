@@ -187,7 +187,7 @@ class TSDFFusion:
             False
         )
     
-    def to_watertight(self, mesh, output_path=None):
+    def to_watertight(self, mesh, output_path=None, file_type="off"):
         # Get the views that we will use for the rendering
         Rs = self.get_views()
         # Render the depth maps
@@ -204,5 +204,5 @@ class TSDFFusion:
 
         tr_mesh = trimesh.Trimesh(vertices=vertices, faces=triangles)
         if output_path is not None:
-            tr_mesh.export(output_path, "off")
+            tr_mesh.export(output_path, file_type)
         return tr_mesh

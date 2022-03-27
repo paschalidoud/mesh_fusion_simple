@@ -40,7 +40,7 @@ def main(argv):
     logging.getLogger("trimesh").setLevel(logging.ERROR)
 
     path_to_file = os.path.join(
-        args.path_to_output_directory, "model_watertight.off"
+        args.path_to_output_directory, "model_watertight.obj"
     )
     # Check optimistically if the file already exists
     ensure_parent_directory_exists(path_to_file)

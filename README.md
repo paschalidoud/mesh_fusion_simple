@@ -61,12 +61,12 @@ pip install -e .
 
 To run our code, we provide the `convert_to_watertight.py` script. In order to
 run this script you only need to provide a path to the dataset directory, as
-well as the dataset type, namely ShapeNet, Dynamic FAUST etc. For now our code
-supports the ShapeNet dataset, the Dynamic FAUST and the FreiHAND dataset. If
-you want to use another dataset, you simply need to implement a Dataset class
-that extends the `ModelCollection` class. For more details please refer to the
-`mesh_fusion/datasets/model_collections.py` file. To run the conversion script
-simply run
+well as the dataset type, namely ShapeNet, Dynamic FAUST, 3D-FRONT etc. For now,
+our code supports the 3D-FRONT, the ShapeNet, the Dynamic FAUST and the FreiHAND
+dataset. If you want to use another dataset, you simply need to implement a
+Dataset class that extends the `ModelCollection` class. For more details please
+refer to the `mesh_fusion/datasets/model_collections.py` file. To run the
+conversion script simply run
 ```
 python convert_to_watertight.py path_to_dataset_directory --dataset_type dataset_type
 ```

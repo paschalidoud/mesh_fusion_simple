@@ -207,36 +207,29 @@ class FreiHand(ModelCollection):
         return self.Model(self._base_dir, self._tags[i])
 
 
-class TurbosquidAnimal(ModelCollection):
+class ThreedFuture(ModelCollection):
     class Model(BaseModel):
         def __init__(self, base_dir, tag):
             super().__init__(tag)
             self._base_dir = base_dir
-            self._tag = tag
 
         @property
         def path_to_mesh_file(self):
-            return os.path.join(self._base_dir, self._tag, "model.off")
+            return os.path.join(self._base_dir, self._tag, "raw_model.obj")
 
         @property
         def path_to_watertight_mesh_file(self):
-            return os.path.join(
-                self._base_dir, self._tag, "model_watertight.off"
-            )
-
-        @property
-        def image_paths(self):
-            return [os.path.join(self._base_dir, self.tag, "image_00000.png")]
+            return os.path.join(self._base_dir, self._tag,
+                                "model_watertight.off")
 
     def __init__(self, base_dir):
         self._base_dir = base_dir
-
         self._tags = sorted([
             fi for fi in os.listdir(self._base_dir)
             if os.path.isdir(os.path.join(self._base_dir, fi))
         ])
 
-        print("Found {} TurbosquidAnimal models".format(len(self)))
+        print("Found {} 3D-Future models".format(len(self)))
 
     def __len__(self):
         return len(self._tags)
@@ -340,7 +333,7 @@ def model_factory(dataset_type):
         "dynamic_faust": DynamicFaust,
         "shapenet_v1": MultiModelsShapeNetV1,
         "freihand": FreiHand,
-        "turbosquid_animal": TurbosquidAnimal
+        "3d_future": ThreedFuture
     }[dataset_type]
 
 
