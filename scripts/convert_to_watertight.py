@@ -72,7 +72,8 @@ def main(argv):
             "shapenet_v1",
             "dynamic_faust",
             "freihand",
-            "3d_future"
+            "3d_future",
+            "deforming_things_4d"
         ],
         help="The type of the dataset type to be used"
     )

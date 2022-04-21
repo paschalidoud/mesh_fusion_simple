@@ -15,6 +15,7 @@ class BaseModel(object):
        model has a unique model_tag, mesh_file and Mesh object. Optionally, it
        can also have a tsdf file.
     """
+
     def __init__(self, tag):
         self._tag = tag
         # Initialize the contents of this instance to empty so that they can be
@@ -287,6 +288,55 @@ class MultiModelsShapeNetV1(ModelCollection):
         return self.Model(self._base_dir, self._tags[i])
 
 
+class DeformingThings4D(ModelCollection):
+    class Model(BaseModel):
+        def __init__(self, base_dir, tag):
+            super().__init__(tag)
+            self._base_dir = base_dir
+            self._category, self._sequence = tag.split(":")
+
+        @property
+        def category(self):
+            return self._category
+
+        @property
+        def path_to_mesh_file(self):
+            return os.path.join(self._base_dir, self._category, "mesh_seq", self._sequence + ".obj")
+
+        @property
+        def path_to_watertight_mesh_file(self):
+            return os.path.join(
+                self._base_dir, self._category, "watertight_mesh_seq", self._sequence + ".obj"
+            )
+
+    def __init__(self, base_dir):
+        self._base_dir = base_dir
+        self._paths = sorted(
+            [
+                d
+                for d in os.listdir(self._base_dir)
+                if os.path.isdir(os.path.join(self._base_dir, d))
+            ]
+        )
+
+        self._tags = sorted(
+            [
+                "{}:{}".format(d, l[:-4])
+                for d in self._paths
+                for l in sorted(os.listdir(os.path.join(self._base_dir, d, "mesh_seq")))
+                if l.endswith(".obj")
+            ]
+        )
+
+        print("Found {} DeformingThings4D models".format(len(self)))
+
+    def __len__(self):
+        return len(self._tags)
+
+    def _get_model(self, i):
+        return self.Model(self._base_dir, self._tags[i])
+
+
 class MeshCache(ModelCollection):
     """Cache the meshes from a collection and give them to the model before
     returning it."""
@@ -333,7 +383,8 @@ def model_factory(dataset_type):
         "dynamic_faust": DynamicFaust,
         "shapenet_v1": MultiModelsShapeNetV1,
         "freihand": FreiHand,
-        "3d_future": ThreedFuture
+        "3d_future": ThreedFuture,
+        "deforming_things_4d": DeformingThings4D,
     }[dataset_type]
 
 
