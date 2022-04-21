@@ -57,6 +57,21 @@ python setup.py build_ext --inplace
 pip install -e .
 ```
 
+We also provide a Dockerfile that you can use to build a Docker image that contains all
+dependencies for running inside a container. You can build the Docker image using the
+following command:
+```
+docker build -f docker/Dockerfile --build-arg CUDA_VERSION=11.2.1 --build-arg UBUNTU_VERSION=18.04 --build-arg PYTHON_VERSION=3.8 --tag mesh_fusion_simple:latest .
+```
+
+You can then run the Docker container in interactive mode, and use the scripts provided in the
+`mesh_fusion_simple` directory of the Docker image. Make sure to mount the path with the 
+location of the original meshes:
+```
+docker run -it --user $(id -u):$(id -g) --mount type=bind,source=[DATA_DIRECTORY_PATH],target=/data mesh_fusion_simple:latest
+```
+
+
 ## Convert to watertight meshes
 
 To run our code, we provide the `convert_to_watertight.py` script. In order to
