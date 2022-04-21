@@ -1,0 +1,18 @@
+name: base
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - cython=0.29.21
+  - numpy=1.19.1
+  - scipy=1.7.3
+  - pycollada=0.7.2
+  - pillow=7.2.0
+  - tqdm=4.50.2
+  - trimesh=3.8.10
+  - wxpython=4.0.7
+  - h5py=3.6.0
+  - pip
+  - pip:
+    - git+https://github.com/angeloskath/simple-3dviz.git
