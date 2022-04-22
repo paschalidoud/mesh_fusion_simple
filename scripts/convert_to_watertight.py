@@ -139,9 +139,15 @@ def main(argv):
             points, faces = raw_mesh.to_points_and_faces()
 
             tr_mesh = trimesh.Trimesh(vertices=points, faces=faces)
+            # Check if the mesh is indeed non-watertight before making the
+            # conversion
+            if tr_mesh.is_watertight:
+                print(f"Mesh file: {pi} is watertight...")
+            tr_mesh.export(path_to_output_file, file_type="obj")
+            continue
             # Make the mesh watertight with TSDF Fusion
             tr_mesh_watertight = tsdf_fuser.to_watertight(
-                tr_mesh, path_to_file
+                tr_mesh, path_to_file, file_type="obj"
             )
 
             if args.simplify:

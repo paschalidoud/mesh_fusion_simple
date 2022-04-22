@@ -43,6 +43,14 @@ def main(argv):
         default=7000,
         help="Max number of faces in the simplified mesh"
     )
+    parser.add_argument(
+        "--bbox",
+        type=lambda x: list(map(float, x.split(","))),
+        default=None,
+        help=("Bounding box to be used for scaling. "
+              "By default we use the unit cube")
+    )
+
     args = parser.parse_args(argv)
     # Disable trimesh's logger
     logging.getLogger("trimesh").setLevel(logging.ERROR)
@@ -64,9 +72,17 @@ def main(argv):
         path_to_output_file = os.path.join(
             args.path_to_output_directory, f"{file_name}.off"
         )
-        # Load and scale the mesh to range [-0.5,0.5]^3
         raw_mesh = Mesh.from_file(pi)
-        raw_mesh.to_unit_cube()
+        if args.bbox is not None:
+            # Scale the mesh to range specified from the input bounding box
+            bbox_min = np.array(args.bbox[:3])
+            bbox_max = np.array(args.bbox[3:])
+            dims = bbox_max - bbox_min
+            raw_mesh._vertices -= dims/2 + bbox_min
+            raw_mesh._vertices /= dims.max()
+        else:
+            # Scale the mesh to range [-0.5,0.5]^3
+            raw_mesh.to_unit_cube()
         # Extract the points and the faces from the raw_mesh
         points, faces = raw_mesh.to_points_and_faces()
 
@@ -81,7 +97,7 @@ def main(argv):
         # Make the mesh watertight with TSDF Fusion
         tsdf_fuser = TSDFFusion()
         tr_mesh_watertight = tsdf_fuser.to_watertight(
-            tr_mesh, path_to_output_file
+            tr_mesh, path_to_output_file, file_type="obj"
         )
         if args.simplify:
             # Call the meshlabserver to simplify the mesh

@@ -37,6 +37,7 @@ This codebase has the following dependencies:
 - [trimesh](https://github.com/mikedh/trimesh)
 - [tqdm](https://github.com/tqdm/tqdm)
 - [h5py](https://www.h5py.org/)
+- [pymeshlab](https://pymeshlab.readthedocs.io/en/latest/)
 
 For the visualizations, we use [simple-3dviz](http://simple-3dviz.com).
 Note that
