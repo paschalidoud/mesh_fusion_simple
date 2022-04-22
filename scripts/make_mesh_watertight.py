@@ -34,7 +34,7 @@ def main(argv):
     )
     parser.add_argument(
         "--simplify",
-        action="store_true"
+        action="store_true",
         help="Simplify the watertight mesh"
     )
     parser.add_argument(

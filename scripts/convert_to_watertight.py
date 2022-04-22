@@ -93,7 +93,7 @@ def main(argv):
     )
     parser.add_argument(
         "--simplify",
-        action="store_true"
+        action="store_true",
         help="Simplify the watertight mesh"
     )
     parser.add_argument(
@@ -143,7 +143,7 @@ def main(argv):
             # conversion
             if tr_mesh.is_watertight:
                 print(f"Mesh file: {pi} is watertight...")
-            tr_mesh.export(path_to_output_file, file_type="obj")
+            tr_mesh.export(path_to_file, file_type="obj")
             continue
             # Make the mesh watertight with TSDF Fusion
             tr_mesh_watertight = tsdf_fuser.to_watertight(

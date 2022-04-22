@@ -301,12 +301,20 @@ class DeformingThings4D(ModelCollection):
 
         @property
         def path_to_mesh_file(self):
-            return os.path.join(self._base_dir, self._category, "mesh_seq", self._sequence + ".obj")
+            return os.path.join(
+                self._base_dir,
+                self._category,
+                "mesh_seq",
+                self._sequence + ".obj"
+            )
 
         @property
         def path_to_watertight_mesh_file(self):
             return os.path.join(
-                self._base_dir, self._category, "watertight_mesh_seq", self._sequence + ".obj"
+                self._base_dir,
+                self._category,
+                "watertight_mesh_seq",
+                self._sequence + ".obj"
             )
 
     def __init__(self, base_dir):
