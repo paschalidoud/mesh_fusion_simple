@@ -32,6 +32,17 @@ def main(argv):
         "path_to_output_directory",
         help="Path to save the watertight mesh"
     )
+    parser.add_argument(
+        "--simplify",
+        action="store_true"
+        help="Simplify the watertight mesh"
+    )
+    parser.add_argument(
+        "--num_target_faces",
+        type=float,
+        default=7000,
+        help="Max number of faces in the simplified mesh"
+    )
     args = parser.parse_args(argv)
     # Disable trimesh's logger
     logging.getLogger("trimesh").setLevel(logging.ERROR)
@@ -72,15 +83,16 @@ def main(argv):
         tr_mesh_watertight = tsdf_fuser.to_watertight(
             tr_mesh, path_to_output_file
         )
-        # Call the meshlabserver to simplify the mesh
-        ms = pymeshlab.MeshSet()
-        ms.load_new_mesh(path_to_output_file)
-        ms.meshing_decimation_quadric_edge_collapse(
-            targetfacenum=7000,
-            qualitythr=0.5,
-            preservenormal=True
-        )
-        ms.save_current_mesh(path_to_output_file)
+        if args.simplify:
+            # Call the meshlabserver to simplify the mesh
+            ms = pymeshlab.MeshSet()
+            ms.load_new_mesh(path_to_output_file)
+            ms.meshing_decimation_quadric_edge_collapse(
+                targetfacenum=args.num_target_faces,
+                qualitythr=0.5,
+                preservenormal=True
+            )
+            ms.save_current_mesh(path_to_output_file)
 
 
 if __name__ == "__main__":

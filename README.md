@@ -102,3 +102,7 @@ to a watertight mesh by specifying its path as follows
 ```
 python make_mesh_watertight.py path_to_mesh path_to_output_directory
 ```
+
+Note that for both scripts you can set `--simplify` in order to simplify the
+final watertight mesh using
+[pymeshlab](https://pymeshlab.readthedocs.io/en/latest/).
