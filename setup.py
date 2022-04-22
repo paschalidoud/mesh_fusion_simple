@@ -124,7 +124,8 @@ def get_install_requirements():
         "Pillow",
         "trimesh",
         "tqdm",
-        "h5py"
+        "h5py",
+        "pymeshlab"
     ]
 
 def setup_package():

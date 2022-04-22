@@ -9,6 +9,8 @@ import numpy as np
 from tqdm import tqdm
 import trimesh
 
+import pymeshlab
+
 from simple_3dviz import Mesh
 
 from mesh_fusion.fusion import TSDFFusion
@@ -30,11 +32,6 @@ def main(argv):
         "path_to_output_directory",
         help="Path to save the watertight mesh"
     )
-    parser.add_argument(
-        "--path_to_simplification_script",
-        default="simplification.mlx",
-        help="Script to be used for mesh simplification"
-    )
     args = parser.parse_args(argv)
     # Disable trimesh's logger
     logging.getLogger("trimesh").setLevel(logging.ERROR)
@@ -51,7 +48,7 @@ def main(argv):
     # Check optimistically if the file already exists
     ensure_parent_directory_exists(args.path_to_output_directory)
 
-    for pi in path_to_meshes:
+    for pi in tqdm(path_to_meshes):
         file_name = pi.split("/")[-1].split(".")[0]
         path_to_output_file = os.path.join(
             args.path_to_output_directory, f"{file_name}.off"
@@ -63,20 +60,27 @@ def main(argv):
         points, faces = raw_mesh.to_points_and_faces()
 
         tr_mesh = trimesh.Trimesh(vertices=points, faces=faces)
+        # Check if the mesh is indeed non-watertight before making the
+        # conversion
+        if tr_mesh.is_watertight:
+            print(f"Mesh file: {pi} is watertight...")
+            tr_mesh.export(path_to_output_file, file_type="obj")
+            continue
+
         # Make the mesh watertight with TSDF Fusion
         tsdf_fuser = TSDFFusion()
         tr_mesh_watertight = tsdf_fuser.to_watertight(
             tr_mesh, path_to_output_file
         )
         # Call the meshlabserver to simplify the mesh
-        simplification_script = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            args.path_to_simplification_script
+        ms = pymeshlab.MeshSet()
+        ms.load_new_mesh(path_to_output_file)
+        ms.meshing_decimation_quadric_edge_collapse(
+            targetfacenum=7000,
+            qualitythr=0.5,
+            preservenormal=True
         )
-        subprocess.call([
-            "meshlabserver"
-            f" -i {path_to_output_file} -o {path_to_output_file} -s {simplification_script}",
-        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True)
+        ms.save_current_mesh(path_to_output_file)
 
 
 if __name__ == "__main__":

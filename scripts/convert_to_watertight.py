@@ -12,6 +12,8 @@ import numpy as np
 from tqdm import tqdm
 import trimesh
 
+import pymeshlab
+
 from mesh_fusion.datasets import ModelCollectionBuilder
 from mesh_fusion.fusion import TSDFFusion
 
@@ -89,11 +91,6 @@ def main(argv):
         default=[],
         help="Category tags to the models to be used"
     )
-    parser.add_argument(
-        "--path_to_simplification_script",
-        default="simplification.mlx",
-        help="Script to be used for mesh simplification"
-    )
 
     args = parser.parse_args(argv)
     # Disable trimesh's logger
@@ -135,15 +132,16 @@ def main(argv):
             tr_mesh_watertight = tsdf_fuser.to_watertight(
                 tr_mesh, path_to_file
             )
+
             # Call the meshlabserver to simplify the mesh
-            simplification_script = os.path.join(
-                os.path.dirname(os.path.realpath(__file__)),
-                args.path_to_simplification_script
+            ms = pymeshlab.MeshSet()
+            ms.load_new_mesh(path_to_file)
+            ms.meshing_decimation_quadric_edge_collapse(
+                targetfacenum=7000,
+                qualitythr=0.5,
+                preservenormal=True
             )
-            subprocess.call([
-                "meshlabserver"
-                f" -i {path_to_file} -o {path_to_file} -s {simplification_script}",
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True)
+            ms.save_current_mesh(path_to_file)
 
 
 if __name__ == "__main__":

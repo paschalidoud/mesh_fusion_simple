@@ -4,3 +4,4 @@ dist
 *.egg-info
 *.so
 *.py.swp
+*.cpp
