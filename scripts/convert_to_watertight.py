@@ -17,6 +17,8 @@ import pymeshlab
 from mesh_fusion.datasets import ModelCollectionBuilder
 from mesh_fusion.fusion import TSDFFusion
 
+from .arguments import add_tsdf_fusion_parameters
+
 
 def ensure_parent_directory_exists(filepath):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -103,6 +105,7 @@ def main(argv):
         help="Max number of faces in the simplified mesh"
     )
 
+    add_tsdf_fusion_parameters(parser)
     args = parser.parse_args(argv)
     # Disable trimesh's logger
     logging.getLogger("trimesh").setLevel(logging.ERROR)
@@ -115,7 +118,18 @@ def main(argv):
         .build(args.dataset_directory)
     )
 
-    tsdf_fuser = TSDFFusion()
+    tsdf_fuser = TSDFFusion(
+        image_height=args.image_size[0],
+        image_width=args.image_size[1],
+        focal_length_x=args.focal_point[0],
+        focal_length_y=args.focal_point[1],
+        principal_point_x=args.principal_point[0],
+        principal_point_y=args.principal_point[1],
+        resolution=args.resolution,
+        truncation_factor=args.truncation_factor,
+        n_views=args.n_views,
+        depth_offset_factor=args.depth_offset_factor
+    )
 
     for sample in tqdm(dataset):
         # Assemble the target path and ensure the parent dir exists

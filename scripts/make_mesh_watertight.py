@@ -15,6 +15,8 @@ from simple_3dviz import Mesh
 
 from mesh_fusion.fusion import TSDFFusion
 
+from .arguments import add_tsdf_fusion_parameters
+
 
 def ensure_parent_directory_exists(filepath):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
@@ -51,6 +53,7 @@ def main(argv):
               "By default we use the unit cube")
     )
 
+    add_tsdf_fusion_parameters(parser)
     args = parser.parse_args(argv)
     # Disable trimesh's logger
     logging.getLogger("trimesh").setLevel(logging.ERROR)
@@ -95,7 +98,19 @@ def main(argv):
             continue
 
         # Make the mesh watertight with TSDF Fusion
-        tsdf_fuser = TSDFFusion()
+        tsdf_fuser = TSDFFusion(
+            image_height=args.image_size[0],
+            image_width=args.image_size[1],
+            focal_length_x=args.focal_point[0],
+            focal_length_y=args.focal_point[1],
+            principal_point_x=args.principal_point[0],
+            principal_point_y=args.principal_point[1],
+            resolution=args.resolution,
+            truncation_factor=args.truncation_factor,
+            n_views=args.n_views,
+            depth_offset_factor=args.depth_offset_factor
+        )
+
         tr_mesh_watertight = tsdf_fuser.to_watertight(
             tr_mesh, path_to_output_file, file_type="obj"
         )
