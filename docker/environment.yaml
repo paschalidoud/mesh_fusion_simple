@@ -16,3 +16,4 @@ dependencies:
   - pip
   - pip:
     - git+https://github.com/angeloskath/simple-3dviz.git
+    - pymeshlab

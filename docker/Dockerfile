@@ -1,7 +1,6 @@
-ARG CUDA_VERSION
 ARG UBUNTU_VERSION
 
-FROM nvidia/cuda:${CUDA_VERSION}-devel-ubuntu${UBUNTU_VERSION}
+FROM ubuntu:${UBUNTU_VERSION}
 
 ARG PYTHON_VERSION
 
@@ -37,6 +36,6 @@ RUN conda env update -f environment.yaml && conda clean -afy
 
 # Mesh fusion dependency installations
 COPY mesh_fusion mesh_fusion_simple/mesh_fusion
-COPY scripts mesh_fusion_simple/scripts
 COPY setup.py README.md mesh_fusion_simple/ 
 RUN cd mesh_fusion_simple && python setup.py build_ext --inplace && pip install -e .
+COPY scripts mesh_fusion_simple/scripts

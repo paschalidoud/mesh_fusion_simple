@@ -62,7 +62,7 @@ We also provide a Dockerfile that you can use to build a Docker image that conta
 dependencies for running inside a container. You can build the Docker image using the
 following command:
 ```
-docker build -f docker/Dockerfile --build-arg CUDA_VERSION=11.2.1 --build-arg UBUNTU_VERSION=18.04 --build-arg PYTHON_VERSION=3.8 --tag mesh_fusion_simple:latest .
+docker build -f docker/Dockerfile --build-arg UBUNTU_VERSION=18.04 --build-arg PYTHON_VERSION=3.8 --tag mesh_fusion_simple:latest .
 ```
 
 You can then run the Docker container in interactive mode, and use the scripts provided in the
