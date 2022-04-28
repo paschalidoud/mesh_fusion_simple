@@ -142,7 +142,7 @@ def main(argv):
             # Check if the mesh is indeed non-watertight before making the
             # conversion
             if tr_mesh.is_watertight:
-                print(f"Mesh file: {pi} is watertight...")
+                print(f"Mesh file: {path_to_file} is watertight...")
                 tr_mesh.export(path_to_file, file_type="off")
                 continue
             # Make the mesh watertight with TSDF Fusion
