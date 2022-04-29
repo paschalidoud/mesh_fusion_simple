@@ -35,7 +35,11 @@ COPY docker/environment.yaml .
 RUN conda env update -f environment.yaml && conda clean -afy
 
 # Mesh fusion dependency installations
-COPY mesh_fusion mesh_fusion_simple/mesh_fusion
+COPY watertight_transformer mesh_fusion_simple/watertight_transformer
 COPY setup.py README.md mesh_fusion_simple/ 
 RUN cd mesh_fusion_simple && python setup.py build_ext --inplace && pip install -e .
+RUN cd mesh_fusion_simple && git clone https://github.com/hjwdzh/ManifoldPlus.git && \
+    cd ManifoldPlus && git submodule update --init --recursive && mkdir build && \
+    cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make -j8 && mkdir ../../scripts/ && \
+    mv manifold ../../scripts/manifoldplus && cd ../../ && rm -rf ManifoldPlus
 COPY scripts mesh_fusion_simple/scripts
