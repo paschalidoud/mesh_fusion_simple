@@ -87,6 +87,8 @@ location of the original meshes:
 ```
 docker run -it --user $(id -u):$(id -g) --mount type=bind,source=[DATA_DIRECTORY_PATH],target=/data mesh_fusion_simple:latest
 ```
+Keep in mind that the ManifoldPlus executable is located inside the folder `/mesh_fusion_simple/scripts` of the docker image,
+named `manifoldplus`.
 
 ## Convert to watertight meshes
 
