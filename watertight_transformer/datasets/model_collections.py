@@ -314,7 +314,7 @@ class DeformingThings4D(ModelCollection):
                 self._base_dir,
                 self._category,
                 "watertight_mesh_seq",
-                self._sequence + ".obj"
+                f"{self._sequence}.obj"
             )
 
     def __init__(self, base_dir):

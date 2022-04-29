@@ -2,6 +2,8 @@ import subprocess
 
 import trimesh
 
+from simple_3dviz import Mesh
+
 
 class ManifoldPlus:
     """Performs the watertight conversion using the Manifold algorithm from [1]
@@ -18,7 +20,7 @@ class ManifoldPlus:
         self.manifoldplus_script = manifoldplus_script
         self.depth = depth
 
-    def to_watertight(self, path_to_mesh, path_to_watertight):
+    def to_watertight(self, path_to_mesh, path_to_watertight, file_type="off"):
         subprocess.call([
             self.manifoldplus_script,
             "--input", path_to_mesh,
@@ -26,4 +28,12 @@ class ManifoldPlus:
             "--depth", str(self.depth),
         ], stdout=subprocess.DEVNULL)
 
-        return trimesh.load(path_to_watertight)
+        tr_mesh = Mesh.from_file(path_to_watertight)
+        # Extract the points and the faces from the raw_mesh
+        points, faces = tr_mesh.to_points_and_faces()
+        tr_mesh = trimesh.Trimesh(vertices=points, faces=faces)
+
+        #trimesh.repair.fix_winding(tr_mesh)
+        tr_mesh.export(path_to_watertight, file_type)
+        return tr_mesh
+

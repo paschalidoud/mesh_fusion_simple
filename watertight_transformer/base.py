@@ -68,13 +68,13 @@ class WatertightTransformerFactory:
             raise NotImplementedError()
 
     
-    def to_watertight(self, mesh, path_to_watertight, file_type="obj"):
+    def to_watertight(self, mesh, path_to_watertight, file_type="off"):
         if self.name == "manifoldplus":
             # Create a temporary file and store the mesh
-            path_to_mesh = NamedTemporaryFile().name + ".obj"
-            mesh.export(path_to_mesh, file_type="obj")
+            path_to_mesh = NamedTemporaryFile().name + file_type
+            mesh.export(path_to_mesh, file_type=file_type)
             self.wat_transformer.to_watertight(
-                path_to_mesh, path_to_watertight
+                path_to_mesh, path_to_watertight, file_type
             )
         elif self.name == "tsdf_fusion":
             self.wat_transformer.to_watertight(
