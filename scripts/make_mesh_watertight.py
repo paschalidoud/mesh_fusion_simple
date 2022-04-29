@@ -2,7 +2,6 @@
 import argparse
 import logging
 import os
-import subprocess
 import sys
 
 import numpy as np
@@ -13,9 +12,9 @@ import pymeshlab
 
 from simple_3dviz import Mesh
 
-from mesh_fusion.fusion import TSDFFusion
+from watertight_transformer import WatertightTransformerFactory
 
-from .arguments import add_tsdf_fusion_parameters
+from arguments import add_tsdf_fusion_parameters, add_manifoldplus_parameters
 
 
 def ensure_parent_directory_exists(filepath):
@@ -33,6 +32,14 @@ def main(argv):
     parser.add_argument(
         "path_to_output_directory",
         help="Path to save the watertight mesh"
+    )
+    parser.add_argument(
+        "--watertight_method",
+        default="tsdf_fusion",
+        choices=[
+            "tsdf_fusion",
+            "manifoldplus"
+        ]
     )
     parser.add_argument(
         "--simplify",
@@ -54,6 +61,7 @@ def main(argv):
     )
 
     add_tsdf_fusion_parameters(parser)
+    add_manifoldplus_parameters(parser)
     args = parser.parse_args(argv)
     # Disable trimesh's logger
     logging.getLogger("trimesh").setLevel(logging.ERROR)
@@ -70,10 +78,26 @@ def main(argv):
     # Check optimistically if the file already exists
     ensure_parent_directory_exists(args.path_to_output_directory)
 
+    wat_transformer = WatertightTransformerFactory(
+        args.watertight_method,
+        image_height=args.image_size[0],
+        image_width=args.image_size[1],
+        focal_length_x=args.focal_point[0],
+        focal_length_y=args.focal_point[1],
+        principal_point_x=args.principal_point[0],
+        principal_point_y=args.principal_point[1],
+        resolution=args.resolution,
+        truncation_factor=args.truncation_factor,
+        n_views=args.n_views,
+        depth_offset_factor=args.depth_offset_factor,
+        manifoldplus_script=args.manifoldplus_script,
+        depth=args.depth
+    )
+
     for pi in tqdm(path_to_meshes):
         file_name = pi.split("/")[-1].split(".")[0]
         path_to_output_file = os.path.join(
-            args.path_to_output_directory, f"{file_name}.off"
+            args.path_to_output_directory, f"{file_name}.obj"
         )
         raw_mesh = Mesh.from_file(pi)
         if args.bbox is not None:
@@ -97,25 +121,12 @@ def main(argv):
             tr_mesh.export(path_to_output_file, file_type="obj")
             continue
 
-        # Make the mesh watertight with TSDF Fusion
-        tsdf_fuser = TSDFFusion(
-            image_height=args.image_size[0],
-            image_width=args.image_size[1],
-            focal_length_x=args.focal_point[0],
-            focal_length_y=args.focal_point[1],
-            principal_point_x=args.principal_point[0],
-            principal_point_y=args.principal_point[1],
-            resolution=args.resolution,
-            truncation_factor=args.truncation_factor,
-            n_views=args.n_views,
-            depth_offset_factor=args.depth_offset_factor
-        )
-
-        tr_mesh_watertight = tsdf_fuser.to_watertight(
+        tr_mesh_watertight = wat_transformer.to_watertight(
             tr_mesh, path_to_output_file, file_type="obj"
         )
         if args.simplify:
             # Call the meshlabserver to simplify the mesh
+            print("Performing mesh simplification...")
             ms = pymeshlab.MeshSet()
             ms.load_new_mesh(path_to_output_file)
             ms.meshing_decimation_quadric_edge_collapse(

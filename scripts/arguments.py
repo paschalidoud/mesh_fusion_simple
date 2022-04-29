@@ -43,3 +43,17 @@ def add_tsdf_fusion_parameters(parser):
         help=("The depth maps are offsetted using "
               "depth_offset_factor*voxel_size.")
     )
+
+
+def add_manifoldplus_parameters(parser):
+    parser.add_argument(
+        "--manifoldplus_script",
+        default=None,
+        help="Path to the script used for implemented the Manifold algorithm"
+    )
+    parser.add_argument(
+        "--depth",
+        type=int,
+        default=10,
+        help="Number of depth values used in the Manifold algorithm"
+    )

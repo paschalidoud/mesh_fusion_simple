@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Setup mesh_fusion."""
+"""Setup watertight_transformer."""
 
 from itertools import dropwhile
 from setuptools import find_packages, setup
@@ -26,7 +26,7 @@ def collect_docstring(lines):
 
 def collect_metadata():
     meta = {}
-    with open(path.join("mesh_fusion", "__init__.py")) as f:
+    with open(path.join("watertight_transformer", "__init__.py")) as f:
         lines = iter(f)
         meta["description"] = collect_docstring(lines)
         for line in lines:
@@ -56,16 +56,16 @@ def get_extensions():
     ]
     return cythonize([
         Extension(
-            "mesh_fusion.external.libmesh.triangle_hash",
-            sources=["mesh_fusion/external/libmesh/triangle_hash.pyx"],
+            "watertight_transformer.external.libmesh.triangle_hash",
+            sources=["watertight_transformer/external/libmesh/triangle_hash.pyx"],
             include_dirs=[np.get_include()],
             libraries=["m"]  # Unix-like specific
         ),
         Extension(
-            "mesh_fusion.external.librender.pyrender",
+            "watertight_transformer.external.librender.pyrender",
             sources=[
-                "mesh_fusion/external/librender/pyrender.pyx",
-                "mesh_fusion/external/librender/offscreen.cpp"
+                "watertight_transformer/external/librender/pyrender.pyx",
+                "watertight_transformer/external/librender/offscreen.cpp"
             ],
             language="c++",
             include_dirs=[np.get_include()],
@@ -74,11 +74,11 @@ def get_extensions():
             libraries=["m"]  # Unix-like specific
         ),
         Extension(
-            "mesh_fusion.external.libmcubes.mcubes",
+            "watertight_transformer.external.libmcubes.mcubes",
             sources=[
-                "mesh_fusion/external/libmcubes/mcubes.pyx",
-                "mesh_fusion/external/libmcubes/pywrapper.cpp",
-                "mesh_fusion/external/libmcubes/marchingcubes.cpp"
+                "watertight_transformer/external/libmcubes/mcubes.pyx",
+                "watertight_transformer/external/libmcubes/pywrapper.cpp",
+                "watertight_transformer/external/libmcubes/marchingcubes.cpp"
             ],
             language="c++",
             include_dirs=[np.get_include()],
@@ -86,10 +86,10 @@ def get_extensions():
             libraries=["m"]  # Unix-like specific
         ),
         Extension(
-            "mesh_fusion.external.libfusioncpu.cyfusion",
+            "watertight_transformer.external.libfusioncpu.cyfusion",
             sources=[
-                "mesh_fusion/external/libfusioncpu/cyfusion.pyx",
-                "mesh_fusion/external/libfusioncpu/fusion.cpp"
+                "watertight_transformer/external/libfusioncpu/cyfusion.pyx",
+                "watertight_transformer/external/libfusioncpu/fusion.cpp"
             ],
             language="c++",
             libraries=["m"],
@@ -100,12 +100,12 @@ def get_extensions():
             extra_link_args=["-fopenmp"]
         ),
         #Extension(
-        #    "mesh_fusion.external.libfusiongpu.cyfusion",
+        #    "watertight_transformer.external.libfusiongpu.cyfusion",
         #    sources=[
-        #        "mesh_fusion/external/libfusiongpu/cyfusion.pyx",
+        #        "watertight_transformer/external/libfusiongpu/cyfusion.pyx",
         #    ],
         #    language="c++",
-        #    library_dirs=["mesh_fusion/external/libfusiongpu/build/"],
+        #    library_dirs=["watertight_transformer/external/libfusiongpu/build/"],
         #    libraries=["m", "fusion_gpu"],
         #    include_dirs=[np.get_include()],
         #    extra_compile_args=[
@@ -133,7 +133,7 @@ def setup_package():
         long_description = f.read()
     meta = collect_metadata()
     setup(
-        name="mesh_fusion",
+        name="watertight_transformer",
         cmdclass={"build_ext": build_ext},
         version=meta["version"],
         description=meta["description"],
