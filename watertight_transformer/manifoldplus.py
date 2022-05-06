@@ -28,12 +28,3 @@ class ManifoldPlus:
             "--depth", str(self.depth),
         ], stdout=subprocess.DEVNULL)
 
-        tr_mesh = Mesh.from_file(path_to_watertight)
-        # Extract the points and the faces from the raw_mesh
-        points, faces = tr_mesh.to_points_and_faces()
-        tr_mesh = trimesh.Trimesh(vertices=points, faces=faces)
-
-        #trimesh.repair.fix_winding(tr_mesh)
-        tr_mesh.export(path_to_watertight, file_type)
-        return tr_mesh
-

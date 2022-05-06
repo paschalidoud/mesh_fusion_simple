@@ -189,7 +189,8 @@ def main(argv):
                 ms.meshing_decimation_quadric_edge_collapse(
                     targetfacenum=args.num_target_faces,
                     qualitythr=0.5,
-                    preservenormal=True
+                    preservenormal=True,
+                    planarquadric=True
                 )
                 ms.save_current_mesh(path_to_file)
 
