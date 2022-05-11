@@ -105,8 +105,13 @@ def main(argv):
         help="Simplify the watertight mesh"
     )
     parser.add_argument(
+        "--unit_cube",
+        action="store_true",
+        help="Normalize mesh to fit a unit cube"
+    )
+    parser.add_argument(
         "--num_target_faces",
-        type=float,
+        type=int,
         default=7000,
         help="Max number of faces in the simplified mesh"
     )
@@ -165,6 +170,17 @@ def main(argv):
                 continue
             # Scale the mesh to range [-0.5,0.5]^3
             raw_mesh = sample.groundtruth_mesh
+            if args.bbox is not None:
+                # Scale the mesh to range specified from the input bounding box
+                bbox_min = np.array(args.bbox[:3])
+                bbox_max = np.array(args.bbox[3:])
+                dims = bbox_max - bbox_min
+                raw_mesh._vertices -= dims/2 + bbox_min
+                raw_mesh._vertices /= dims.max()
+            else:
+                if args.unit_cube:
+                    # Scale the mesh to range [-0.5,0.5]^3
+                    raw_mesh.to_unit_cube()
             raw_mesh.to_unit_cube()
             # Extract the points and the faces from the raw_mesh
             points, faces = raw_mesh.to_points_and_faces()
@@ -190,7 +206,8 @@ def main(argv):
                     targetfacenum=args.num_target_faces,
                     qualitythr=0.5,
                     preservenormal=True,
-                    planarquadric=True
+                    planarquadric=True,
+                    preservetopology=True,
                 )
                 ms.save_current_mesh(path_to_file)
 
