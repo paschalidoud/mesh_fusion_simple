@@ -181,7 +181,6 @@ def main(argv):
                 if args.unit_cube:
                     # Scale the mesh to range [-0.5,0.5]^3
                     raw_mesh.to_unit_cube()
-            raw_mesh.to_unit_cube()
             # Extract the points and the faces from the raw_mesh
             points, faces = raw_mesh.to_points_and_faces()
 
