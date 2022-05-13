@@ -42,20 +42,9 @@ def main(argv):
         ]
     )
     parser.add_argument(
-        "--simplify",
-        action="store_true",
-        help="Simplify the watertight mesh"
-    )
-    parser.add_argument(
         "--unit_cube",
         action="store_true",
         help="Normalize mesh to fit a unit cube"
-    )
-    parser.add_argument(
-        "--num_target_faces",
-        type=int,
-        default=7000,
-        help="Max number of faces in the simplified mesh"
     )
     parser.add_argument(
         "--bbox",
@@ -63,6 +52,17 @@ def main(argv):
         default=None,
         help=("Bounding box to be used for scaling. "
               "By default we use the unit cube")
+    )
+    parser.add_argument(
+        "--simplify",
+        action="store_true",
+        help="Simplify the watertight mesh"
+    )
+    parser.add_argument(
+        "--num_target_faces",
+        type=int,
+        default=7000,
+        help="Max number of faces in the simplified mesh"
     )
 
     add_tsdf_fusion_parameters(parser)
