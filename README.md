@@ -123,5 +123,6 @@ python make_mesh_watertight.py path_to_mesh path_to_output_directory --watertigh
 
 Note that for both scripts you can set `--simplify` in order to simplify the
 final watertight mesh using
-[pymeshlab](https://pymeshlab.readthedocs.io/en/latest/).
-
+[pymeshlab](https://pymeshlab.readthedocs.io/en/latest/). You can also rescale
+the watertight mesh, either using bounding box bounds (`--bbox`), or to make it
+fit inside a unit cube (`--unit_cube`).

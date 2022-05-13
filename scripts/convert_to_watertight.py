@@ -100,15 +100,9 @@ def main(argv):
         ]
     )
     parser.add_argument(
-        "--simplify",
+        "--unit_cube",
         action="store_true",
-        help="Simplify the watertight mesh"
-    )
-    parser.add_argument(
-        "--num_target_faces",
-        type=float,
-        default=7000,
-        help="Max number of faces in the simplified mesh"
+        help="Normalize mesh to fit a unit cube"
     )
     parser.add_argument(
         "--bbox",
@@ -116,6 +110,23 @@ def main(argv):
         default=None,
         help=("Bounding box to be used for scaling. "
               "By default we use the unit cube")
+    )
+    parser.add_argument(
+        "--simplify",
+        action="store_true",
+        help="Simplify the watertight mesh"
+    )
+    parser.add_argument(
+        "--num_target_faces",
+        type=int,
+        default=None,
+        help="Max number of faces in the simplified mesh"
+    )
+    parser.add_argument(
+        "--ratio_target_faces",
+        type=float,
+        default=None,
+        help="Ratio of target faces with regards to input mesh faces"
     )
 
     add_tsdf_fusion_parameters(parser)
@@ -148,6 +159,12 @@ def main(argv):
         depth=args.depth
     )
 
+    # Check configuration for simplification
+    if args.simplify:
+        assert (
+            args.num_target_faces or args.ratio_target_faces
+        ), f"Need to provide num_target_faces or ratio_target_faces for simplification."
+
     for sample in tqdm(dataset):
         # Assemble the target path and ensure the parent dir exists
         path_to_file = sample.path_to_watertight_mesh_file
@@ -165,7 +182,18 @@ def main(argv):
                 continue
             # Scale the mesh to range [-0.5,0.5]^3
             raw_mesh = sample.groundtruth_mesh
-            raw_mesh.to_unit_cube()
+            if args.bbox is not None:
+                # Scale the mesh to range specified from the input bounding box
+                bbox_min = np.array(args.bbox[:3])
+                bbox_max = np.array(args.bbox[3:])
+                dims = bbox_max - bbox_min
+                raw_mesh._vertices -= dims/2 + bbox_min
+                raw_mesh._vertices /= dims.max()
+            else:
+                if args.unit_cube:
+                    # Scale the mesh to range [-0.5,0.5]^3
+                    # This is needed for TSDF Fusion!
+                    raw_mesh.to_unit_cube()
             # Extract the points and the faces from the raw_mesh
             points, faces = raw_mesh.to_points_and_faces()
 
@@ -182,15 +210,21 @@ def main(argv):
             )
 
             if args.simplify:
+                if args.num_target_faces:
+                    num_faces = args.num_target_faces
+                else:
+                    num_faces = int(args.ratio_target_faces * len(faces))    
                 # Call the meshlabserver to simplify the mesh
-                print("Performing mesh simplification...")
+                print(f"Performing mesh simplification to {num_faces} target number of faces")
                 ms = pymeshlab.MeshSet()
                 ms.load_new_mesh(path_to_file)
                 ms.meshing_decimation_quadric_edge_collapse(
-                    targetfacenum=args.num_target_faces,
+                    targetfacenum=num_faces,
                     qualitythr=0.5,
                     preservenormal=True,
-                    planarquadric=True
+                    planarquadric=True,
+                    preservetopology=True,
+                    autoclean=False # very important for watertightness preservation
                 )
                 ms.save_current_mesh(path_to_file)
 
