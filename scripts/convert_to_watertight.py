@@ -119,8 +119,14 @@ def main(argv):
     parser.add_argument(
         "--num_target_faces",
         type=int,
-        default=7000,
+        default=None,
         help="Max number of faces in the simplified mesh"
+    )
+    parser.add_argument(
+        "--ratio_target_faces",
+        type=float,
+        default=None,
+        help="Ratio of target faces with regards to input mesh faces"
     )
 
     add_tsdf_fusion_parameters(parser)
@@ -153,6 +159,12 @@ def main(argv):
         depth=args.depth
     )
 
+    # Check configuration for simplification
+    if args.simplify:
+        assert (
+            args.num_target_faces or args.ratio_target_faces
+        ), f"Need to provide num_target_faces or ratio_target_faces for simplification."
+
     for sample in tqdm(dataset):
         # Assemble the target path and ensure the parent dir exists
         path_to_file = sample.path_to_watertight_mesh_file
@@ -180,6 +192,7 @@ def main(argv):
             else:
                 if args.unit_cube:
                     # Scale the mesh to range [-0.5,0.5]^3
+                    # This is needed for TSDF Fusion!
                     raw_mesh.to_unit_cube()
             # Extract the points and the faces from the raw_mesh
             points, faces = raw_mesh.to_points_and_faces()
@@ -197,12 +210,16 @@ def main(argv):
             )
 
             if args.simplify:
+                if args.num_target_faces:
+                    num_faces = args.num_target_faces
+                else:
+                    num_faces = int(args.ratio_target_faces * len(faces))    
                 # Call the meshlabserver to simplify the mesh
-                print("Performing mesh simplification...")
+                print(f"Performing mesh simplification to {num_faces} target number of faces")
                 ms = pymeshlab.MeshSet()
                 ms.load_new_mesh(path_to_file)
                 ms.meshing_decimation_quadric_edge_collapse(
-                    targetfacenum=args.num_target_faces,
+                    targetfacenum=num_faces,
                     qualitythr=0.5,
                     preservenormal=True,
                     planarquadric=True,
