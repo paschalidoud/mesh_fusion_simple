@@ -158,6 +158,7 @@ def main(argv):
                 preservenormal=True,
                 planarquadric=True,
                 preservetopology=True,
+                autoclean=False # very important for watertightness preservation
             )
             ms.save_current_mesh(path_to_output_file)
 
