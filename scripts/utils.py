@@ -47,9 +47,9 @@ def mesh_to_watertight(
     if tr_mesh.is_watertight:
         print(f"Mesh file: {path_to_file} is watertight...")
         tr_mesh.export(path_to_file, file_type="obj")
-        return
-    # Make the mesh watertight with TSDF Fusion
-    tr_mesh_watertight = wat_transformer.to_watertight(tr_mesh, path_to_file, file_type="obj")
+    else:
+        # Make the mesh watertight with TSDF Fusion or ManifoldPlus
+        wat_transformer.to_watertight(tr_mesh, path_to_file, file_type="obj")
 
     if simplify:
         if num_target_faces:
