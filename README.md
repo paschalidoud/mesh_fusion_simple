@@ -59,7 +59,8 @@ For the visualizations, we use [simple-3dviz](http://simple-3dviz.com).
 Note that
 [simple-3dviz](http://simple-3dviz.com) provides a lightweight and easy-to-use
 scene viewer using [wxpython](https://www.wxpython.org/). 
-
+Finally, the code runs in headless mode by default, so you need to have `xvfb`
+installed (at least for the TSDF Fusion method). 
 The simplest way to make sure that you have all dependencies in place is to use
 [conda](https://docs.conda.io/projects/conda/en/4.6.1/index.html). You can
 create a conda environment called ```mesh_fusion``` using
@@ -106,10 +107,10 @@ python convert_to_watertight.py path_to_dataset_directory --dataset_type dataset
 Currently, our code only runs on CPU. However, you can lauch this script from
 multiple CPU nodes in order to speed up the computation time. This script
 automatically checks whether a model has already been converted before initiating
-the transformation process. In case you want to run this script at an Ubuntu
-machine, with no monitor, simply run
+the transformation process. To run the code for multiple processes, you can do something
+like the following:
 ```
-for i in {1..10}; do xvfb-run -a python convert_to_watertight.py /orion/u/paschald/Datasets/ShapeNetCore.v1/ --watertight_method tsdf_fusion --category_tags 02691156 --dataset_type shapenet_v1 & done
+for i in {1..10}; do python convert_to_watertight.py /orion/u/paschald/Datasets/ShapeNetCore.v1/ --watertight_method tsdf_fusion --category_tags 02691156 --dataset_type shapenet_v1 --unit_cube & done
 wait
 ```
 This script launches 10 CPU jobs. However, you can launch more or less
