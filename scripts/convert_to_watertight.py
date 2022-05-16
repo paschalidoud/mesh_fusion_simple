@@ -3,130 +3,119 @@
 """
 import argparse
 import logging
-import os
 import sys
+from functools import partial
 
-import numpy as np
-from tqdm import tqdm
 import trimesh
-
-import pymeshlab
-
-from watertight_transformer.datasets import ModelCollectionBuilder
+from tqdm.contrib.concurrent import process_map
 from watertight_transformer import WatertightTransformerFactory
+from watertight_transformer.datasets import ModelCollectionBuilder
+from watertight_transformer.datasets.model_collections import BaseModel, ModelCollection
 
-from arguments import add_tsdf_fusion_parameters, add_manifoldplus_parameters
+from arguments import add_manifoldplus_parameters, add_tsdf_fusion_parameters
+from utils import mesh_to_watertight
 
 
-def ensure_parent_directory_exists(filepath):
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+def distribute_files(
+    dataset: ModelCollection,
+    wat_transformer,
+    bbox: list = None,
+    unit_cube: bool = False,
+    simplify: bool = None,
+    num_target_faces: int = None,
+    ratio_target_faces: float = None,
+    num_cpus: int = 1,
+):
+    # Assuming that dataset iterator contains only one instance of each path
+    process_map(
+        partial(
+            ds_sample_to_watertight,
+            wat_transformer=wat_transformer,
+            bbox=bbox,
+            unit_cube=unit_cube,
+            simplify=simplify,
+            num_target_faces=num_target_faces,
+            ratio_target_faces=ratio_target_faces,
+        ),
+        dataset,
+        max_workers=num_cpus,
+    )
 
 
-class DirLock(object):
-    def __init__(self, dirpath):
-        self._dirpath = dirpath
-        self._acquired = False
-
-    @property
-    def is_acquired(self):
-        return self._acquired
-
-    def acquire(self):
-        if self._acquired:
-            return
-        try:
-            os.mkdir(self._dirpath)
-            self._acquired = True
-        except FileExistsError:
-            pass
-
-    def release(self):
-        if not self._acquired:
-            return
-        try:
-            os.rmdir(self._dirpath)
-            self._acquired = False
-        except FileNotFoundError:
-            self._acquired = False
-        except OSError:
-            pass
-
-    def __enter__(self):
-        self.acquire()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.release()
+def ds_sample_to_watertight(
+    sample: BaseModel,
+    wat_transformer,
+    bbox: list = None,
+    unit_cube: bool = False,
+    simplify: bool = None,
+    num_target_faces: int = None,
+    ratio_target_faces: float = None,
+):
+    mesh = sample.groundtruth_mesh
+    path_to_file = sample.path_to_watertight_mesh_file
+    mesh_to_watertight(
+        mesh=mesh,
+        wat_transformer=wat_transformer,
+        path_to_file=path_to_file,
+        bbox=bbox,
+        unit_cube=unit_cube,
+        simplify=simplify,
+        num_target_faces=num_target_faces,
+        ratio_target_faces=ratio_target_faces,
+    )
 
 
 def main(argv):
-    parser = argparse.ArgumentParser(
-        description="Convert non-watertight meshes to watertight"
-    )
-    parser.add_argument(
-        "dataset_directory",
-        help="Path to the directory containing the dataset"
-    )
+    parser = argparse.ArgumentParser(description="Convert non-watertight meshes to watertight")
+    parser.add_argument("dataset_directory", help="Path to the directory containing the dataset")
     parser.add_argument(
         "--dataset_type",
         default="shapenet_v1",
-        choices=[
-            "shapenet_v1",
-            "dynamic_faust",
-            "freihand",
-            "3d_future",
-            "deforming_things_4d"
-        ],
-        help="The type of the dataset type to be used"
+        choices=["shapenet_v1", "dynamic_faust", "freihand", "3d_future", "deforming_things_4d"],
+        help="The type of the dataset type to be used",
     )
     parser.add_argument(
         "--model_tags",
         type=lambda x: x.split(","),
         default=[],
-        help="Tags to the models to be used"
+        help="Tags to the models to be used",
     )
     parser.add_argument(
         "--category_tags",
         type=lambda x: x.split(","),
         default=[],
-        help="Category tags to the models to be used"
+        help="Category tags to the models to be used",
     )
     parser.add_argument(
-        "--watertight_method",
-        default="tsdf_fusion",
-        choices=[
-            "tsdf_fusion",
-            "manifoldplus"
-        ]
+        "--watertight_method", default="tsdf_fusion", choices=["tsdf_fusion", "manifoldplus"]
     )
     parser.add_argument(
-        "--unit_cube",
-        action="store_true",
-        help="Normalize mesh to fit a unit cube"
+        "--unit_cube", action="store_true", help="Normalize mesh to fit a unit cube"
     )
     parser.add_argument(
         "--bbox",
         type=lambda x: list(map(float, x.split(","))),
         default=None,
-        help=("Bounding box to be used for scaling. "
-              "By default we use the unit cube")
+        help=("Bounding box to be used for scaling. " "By default we use the unit cube"),
     )
-    parser.add_argument(
-        "--simplify",
-        action="store_true",
-        help="Simplify the watertight mesh"
-    )
+    parser.add_argument("--simplify", action="store_true", help="Simplify the watertight mesh")
     parser.add_argument(
         "--num_target_faces",
         type=int,
         default=None,
-        help="Max number of faces in the simplified mesh"
+        help="Max number of faces in the simplified mesh",
     )
     parser.add_argument(
         "--ratio_target_faces",
         type=float,
         default=None,
-        help="Ratio of target faces with regards to input mesh faces"
+        help="Ratio of target faces with regards to input mesh faces",
+    )
+    parser.add_argument(
+        "--num_cpus",
+        type=int,
+        default=1,
+        help="Number of processes to be used for the multiprocessing setup",
     )
 
     add_tsdf_fusion_parameters(parser)
@@ -156,77 +145,19 @@ def main(argv):
         n_views=args.n_views,
         depth_offset_factor=args.depth_offset_factor,
         manifoldplus_script=args.manifoldplus_script,
-        depth=args.depth
+        depth=args.depth,
     )
 
-    # Check configuration for simplification
-    if args.simplify:
-        assert (
-            args.num_target_faces or args.ratio_target_faces
-        ), f"Need to provide num_target_faces or ratio_target_faces for simplification."
-
-    for sample in tqdm(dataset):
-        # Assemble the target path and ensure the parent dir exists
-        path_to_file = sample.path_to_watertight_mesh_file
-
-        # Check optimistically if the file already exists
-        if os.path.exists(path_to_file):
-            continue
-        ensure_parent_directory_exists(path_to_file)
-
-        # Make sure we are the only ones creating this file
-        with DirLock(path_to_file + ".lock") as lock:
-            if not lock.is_acquired:
-                continue
-            if os.path.exists(path_to_file):
-                continue
-            # Scale the mesh to range [-0.5,0.5]^3
-            raw_mesh = sample.groundtruth_mesh
-            if args.bbox is not None:
-                # Scale the mesh to range specified from the input bounding box
-                bbox_min = np.array(args.bbox[:3])
-                bbox_max = np.array(args.bbox[3:])
-                dims = bbox_max - bbox_min
-                raw_mesh._vertices -= dims/2 + bbox_min
-                raw_mesh._vertices /= dims.max()
-            else:
-                if args.unit_cube:
-                    # Scale the mesh to range [-0.5,0.5]^3
-                    # This is needed for TSDF Fusion!
-                    raw_mesh.to_unit_cube()
-            # Extract the points and the faces from the raw_mesh
-            points, faces = raw_mesh.to_points_and_faces()
-
-            tr_mesh = trimesh.Trimesh(vertices=points, faces=faces)
-            # Check if the mesh is indeed non-watertight before making the
-            # conversion
-            if tr_mesh.is_watertight:
-                print(f"Mesh file: {path_to_file} is watertight...")
-                tr_mesh.export(path_to_file, file_type="obj")
-                continue
-            # Make the mesh watertight with TSDF Fusion
-            tr_mesh_watertight = wat_transformer.to_watertight(
-                tr_mesh, path_to_file, file_type="obj"
-            )
-
-            if args.simplify:
-                if args.num_target_faces:
-                    num_faces = args.num_target_faces
-                else:
-                    num_faces = int(args.ratio_target_faces * len(faces))    
-                # Call the meshlabserver to simplify the mesh
-                print(f"Performing mesh simplification to {num_faces} target number of faces")
-                ms = pymeshlab.MeshSet()
-                ms.load_new_mesh(path_to_file)
-                ms.meshing_decimation_quadric_edge_collapse(
-                    targetfacenum=num_faces,
-                    qualitythr=0.5,
-                    preservenormal=True,
-                    planarquadric=True,
-                    preservetopology=True,
-                    autoclean=False # very important for watertightness preservation
-                )
-                ms.save_current_mesh(path_to_file)
+    distribute_files(
+        dataset=dataset,
+        wat_transformer=wat_transformer,
+        bbox=args.bbox,
+        unit_cube=args.unit_cube,
+        simplify=args.simplify,
+        num_target_faces=args.num_target_faces,
+        ratio_target_faces=args.ratio_target_faces,
+        num_cpus=args.num_cpus,
+    )
 
 
 if __name__ == "__main__":
