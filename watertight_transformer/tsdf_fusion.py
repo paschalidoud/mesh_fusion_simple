@@ -1,15 +1,15 @@
 import math
+
 import numpy as np
+import trimesh
+from pyvirtualdisplay import Display
 from scipy import ndimage
 
-import trimesh
-
-from .external.librender import pyrender
-from .external.libmcubes import mcubes
 from .external.libfusioncpu import cyfusion as libfusion
 from .external.libfusioncpu.cyfusion import tsdf_cpu as compute_tsdf
-
-from .utils import write_hdf5, read_hdf5
+from .external.libmcubes import mcubes
+from .external.librender import pyrender
+from .utils import read_hdf5, write_hdf5
 
 
 class TSDFFusion:
@@ -190,8 +190,9 @@ class TSDFFusion:
     def to_watertight(self, mesh, output_path=None, file_type="off"):
         # Get the views that we will use for the rendering
         Rs = self.get_views()
-        # Render the depth maps
-        depths = self.render(mesh, Rs)
+        with Display() as disp:
+            # Render the depth maps
+            depths = self.render(mesh, Rs)
         tsdf = self.fusion(depths, Rs)[0]
         # To ensure that the final mesh is indeed watertight
         tsdf = np.pad(tsdf, 1, "constant", constant_values=1e6)

@@ -18,3 +18,4 @@ dependencies:
   - pip
   - pip:
     - simple_3dviz==0.2.1
+    - pyvirtualdisplay
