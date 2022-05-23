@@ -66,8 +66,12 @@ def main(argv):
             if not os.path.exists(path_to_file):
                 print(f"File does not exist in location: {path_to_file}")
 
-            # Load mesh using Trimesh to check watertightness
-            tr_mesh = trimesh.load(path_to_file, process=False)
+            try:
+                # Load mesh using Trimesh to check watertightness
+                tr_mesh = trimesh.load(path_to_file, process=False, force="mesh")
+            except Exception as e:
+                print(f"Error raised while loading file {path_to_file}")
+                raise
             if not tr_mesh.is_watertight:
                 count += 1
                 f.write(path_to_file + "\n")
