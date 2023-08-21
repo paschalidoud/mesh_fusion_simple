@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-"""Script for converting non-watertight meshes to watertight meshes.
-"""
+"""Script for converting non-watertight meshes to watertight meshes. This
+script is intended for meshes organized in datasets."""
+
 import argparse
 import logging
 import sys
@@ -10,9 +11,11 @@ import trimesh
 from tqdm.contrib.concurrent import process_map
 from watertight_transformer import WatertightTransformerFactory
 from watertight_transformer.datasets import ModelCollectionBuilder
-from watertight_transformer.datasets.model_collections import BaseModel, ModelCollection
+from watertight_transformer.datasets.model_collections import \
+    BaseModel, ModelCollection
 
-from arguments import add_manifoldplus_parameters, add_tsdf_fusion_parameters
+from arguments import add_manifoldplus_parameters, \
+    add_tsdf_fusion_parameters
 from utils import mesh_to_watertight
 
 
@@ -66,12 +69,23 @@ def ds_sample_to_watertight(
 
 
 def main(argv):
-    parser = argparse.ArgumentParser(description="Convert non-watertight meshes to watertight")
-    parser.add_argument("dataset_directory", help="Path to the directory containing the dataset")
+    parser = argparse.ArgumentParser(
+        description="Convert non-watertight meshes to watertight"
+    )
+    parser.add_argument(
+        "dataset_directory",
+        help="Path to the directory containing the dataset"
+    )
     parser.add_argument(
         "--dataset_type",
         default="shapenet_v1",
-        choices=["shapenet_v1", "dynamic_faust", "freihand", "3d_future", "deforming_things_4d"],
+        choices=[
+            "shapenet_v1",
+            "dynamic_faust",
+            "freihand",
+            "3d_future",
+            "deforming_things_4d"
+        ],
         help="The type of the dataset type to be used",
     )
     parser.add_argument(
@@ -87,18 +101,30 @@ def main(argv):
         help="Category tags to the models to be used",
     )
     parser.add_argument(
-        "--watertight_method", default="tsdf_fusion", choices=["tsdf_fusion", "manifoldplus"]
+        "--watertight_method",
+        default="tsdf_fusion",
+        choices=[
+            "tsdf_fusion",
+            "manifoldplus"
+        ]
     )
     parser.add_argument(
-        "--unit_cube", action="store_true", help="Normalize mesh to fit a unit cube"
+        "--unit_cube",
+        action="store_true",
+        help="Normalize mesh to fit a unit cube"
     )
     parser.add_argument(
         "--bbox",
         type=lambda x: list(map(float, x.split(","))),
         default=None,
-        help=("Bounding box to be used for scaling. " "By default we use the unit cube"),
+        help=("Bounding box to be used for scaling. "
+              "By default we use the unit cube"),
     )
-    parser.add_argument("--simplify", action="store_true", help="Simplify the watertight mesh")
+    parser.add_argument(
+        "--simplify",
+        action="store_true",
+        help="Simplify the watertight mesh"
+    )
     parser.add_argument(
         "--num_target_faces",
         type=int,
@@ -115,7 +141,7 @@ def main(argv):
         "--num_cpus",
         type=int,
         default=1,
-        help="Number of processes to be used for the multiprocessing setup",
+        help="Number of processes to be used for the multiprocessing setup"
     )
 
     add_tsdf_fusion_parameters(parser)
