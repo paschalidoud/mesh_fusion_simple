@@ -17,7 +17,7 @@ def mesh_to_watertight(
     path_to_file: str,
     bbox: list = None,
     unit_cube: bool = False,
-    simplify: bool = None,
+    simplify: bool = False,
     num_target_faces: int = None,
     ratio_target_faces: float = None,
 ):
@@ -25,6 +25,10 @@ def mesh_to_watertight(
     if os.path.exists(path_to_file):
         return
     ensure_parent_directory_exists(path_to_file)
+    # Extract the file type from the output file
+    file_type = path_to_file.split(".")[-1]
+    if file_type not in ["off", "obj"]:
+        raise Exception(f"The {file_type} is not a valid mesh extension")
 
     if bbox is not None:
         # Scale the mesh to range specified from the input bounding box
@@ -44,12 +48,14 @@ def mesh_to_watertight(
     tr_mesh = trimesh.Trimesh(vertices=points, faces=faces)
     # Check if the mesh is indeed non-watertight before making the
     # conversion
-    if tr_mesh.is_watertight:
-        print(f"Mesh file: {path_to_file} is watertight...")
-        tr_mesh.export(path_to_file, file_type="obj")
-    else:
-        # Make the mesh watertight with TSDF Fusion or ManifoldPlus
-        wat_transformer.to_watertight(tr_mesh, path_to_file, file_type="obj")
+    #if tr_mesh.is_watertight:
+    #    # print(f"Mesh file: {path_to_file} is watertight...")
+    #    # tr_mesh.export(path_to_file, file_type=file_type)
+    #else:
+    # Make the mesh watertight with TSDF Fusion or ManifoldPlus
+    wat_transformer.to_watertight(
+        tr_mesh, path_to_file, file_type=file_type
+    )
 
     if simplify:
         if num_target_faces:

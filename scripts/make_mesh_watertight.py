@@ -53,7 +53,8 @@ def mesh_path_to_watertight(
     ratio_target_faces: float = None,
 ):
     file_name = mesh_path.split("/")[-1].split(".")[0]
-    path_to_file = os.path.join(output_folder_path, f"{file_name}.obj")
+    # path_to_file = os.path.join(output_folder_path, f"{file_name}.obj")
+    path_to_file = os.path.join(output_folder_path, "model_watertight.obj")
     raw_mesh = Mesh.from_file(mesh_path)
     mesh_to_watertight(
         mesh=raw_mesh,
@@ -68,24 +69,38 @@ def mesh_path_to_watertight(
 
 
 def main(argv):
-    parser = argparse.ArgumentParser(description="Convert non-watertight meshes to watertight")
-    parser.add_argument(
-        "path_to_meshes", help="Path to folder containing the mesh/meshes to be converted"
-    )
-    parser.add_argument("path_to_output_directory", help="Path to save the watertight mesh")
-    parser.add_argument(
-        "--watertight_method", default="tsdf_fusion", choices=["tsdf_fusion", "manifoldplus"]
+    parser = argparse.ArgumentParser(
+        description="Convert non-watertight meshes to watertight"
     )
     parser.add_argument(
-        "--unit_cube", action="store_true", help="Normalize mesh to fit a unit cube"
+        "path_to_meshes",
+        help="Path to folder containing the mesh/meshes to be converted"
+    )
+    parser.add_argument(
+        "path_to_output_directory",
+        help="Path to save the watertight mesh")
+    parser.add_argument(
+        "--watertight_method",
+        default="tsdf_fusion",
+        choices=["tsdf_fusion", "manifoldplus"]
+    )
+    parser.add_argument(
+        "--unit_cube",
+        action="store_true",
+        help="Normalize mesh to fit a unit cube"
     )
     parser.add_argument(
         "--bbox",
         type=lambda x: list(map(float, x.split(","))),
         default=None,
-        help=("Bounding box to be used for scaling. " "By default we use the unit cube"),
+        help=("Bounding box to be used for scaling. "
+              "By default we use the unit cube")
     )
-    parser.add_argument("--simplify", action="store_true", help="Simplify the watertight mesh")
+    parser.add_argument(
+        "--simplify",
+        action="store_true",
+        help="Simplify the watertight mesh"
+    )
     parser.add_argument(
         "--num_target_faces",
         type=int,

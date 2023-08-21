@@ -2,7 +2,6 @@ import math
 
 import numpy as np
 import trimesh
-from pyvirtualdisplay import Display
 from scipy import ndimage
 
 from .external.libfusioncpu import cyfusion as libfusion
@@ -190,9 +189,8 @@ class TSDFFusion:
     def to_watertight(self, mesh, output_path=None, file_type="off"):
         # Get the views that we will use for the rendering
         Rs = self.get_views()
-        with Display() as disp:
-            # Render the depth maps
-            depths = self.render(mesh, Rs)
+        # Render the depth maps
+        depths = self.render(mesh, Rs)
         tsdf = self.fusion(depths, Rs)[0]
         # To ensure that the final mesh is indeed watertight
         tsdf = np.pad(tsdf, 1, "constant", constant_values=1e6)
