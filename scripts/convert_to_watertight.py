@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-"""Script for converting non-watertight meshes to watertight meshes.
-"""
+"""Script for converting non-watertight meshes to watertight meshes. This
+script is intended for meshes organized in datasets."""
 import argparse
 import logging
 import os
@@ -15,48 +15,9 @@ import pymeshlab
 from watertight_transformer.datasets import ModelCollectionBuilder
 from watertight_transformer import WatertightTransformerFactory
 
-from arguments import add_tsdf_fusion_parameters, add_manifoldplus_parameters
-
-
-def ensure_parent_directory_exists(filepath):
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
-
-
-class DirLock(object):
-    def __init__(self, dirpath):
-        self._dirpath = dirpath
-        self._acquired = False
-
-    @property
-    def is_acquired(self):
-        return self._acquired
-
-    def acquire(self):
-        if self._acquired:
-            return
-        try:
-            os.mkdir(self._dirpath)
-            self._acquired = True
-        except FileExistsError:
-            pass
-
-    def release(self):
-        if not self._acquired:
-            return
-        try:
-            os.rmdir(self._dirpath)
-            self._acquired = False
-        except FileNotFoundError:
-            self._acquired = False
-        except OSError:
-            pass
-
-    def __enter__(self):
-        self.acquire()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.release()
+from arguments import add_tsdf_fusion_parameters, \
+    add_manifoldplus_parameters
+from .utils import DirLock, ensure_parent_directory_exists
 
 
 def main(argv):
@@ -111,11 +72,16 @@ def main(argv):
         help="Max number of faces in the simplified mesh"
     )
     parser.add_argument(
+        "--unit_cube",
+        action="store_true",
+        help="Normalize mesh to fit a unit cube"
+    )
+    parser.add_argument(
         "--bbox",
         type=lambda x: list(map(float, x.split(","))),
         default=None,
         help=("Bounding box to be used for scaling. "
-              "By default we use the unit cube")
+              "By default we use the unit cube"),
     )
 
     add_tsdf_fusion_parameters(parser)
@@ -156,6 +122,10 @@ def main(argv):
         if os.path.exists(path_to_file):
             continue
         ensure_parent_directory_exists(path_to_file)
+        # Extract the file type from the output file
+        file_type = path_to_file.split(".")[-1]
+        if file_type not in ["off", "obj"]:
+            raise Exception(f"The {file_type} is not a valid mesh extension")
 
         # Make sure we are the only ones creating this file
         with DirLock(path_to_file + ".lock") as lock:
@@ -165,7 +135,20 @@ def main(argv):
                 continue
             # Scale the mesh to range [-0.5,0.5]^3
             raw_mesh = sample.groundtruth_mesh
-            raw_mesh.to_unit_cube()
+
+            if args.bbox is not None:
+                # Scale the mesh to range specified from the input bounding box
+                bbox_min = np.array(bbox[:3])
+                bbox_max = np.array(bbox[3:])
+                dims = bbox_max - bbox_min
+                raw_mesh._vertices -= dims / 2 + bbox_min
+                raw_mesh._vertices /= dims.max()
+            else:
+                if unit_cube:
+                    # Scale the mesh to range [-0.5,0.5]^3
+                    # This is needed for TSDF Fusion!
+                    raw_mesh.to_unit_cube()
+
             # Extract the points and the faces from the raw_mesh
             points, faces = raw_mesh.to_points_and_faces()
 
@@ -174,11 +157,12 @@ def main(argv):
             # conversion
             if tr_mesh.is_watertight:
                 print(f"Mesh file: {path_to_file} is watertight...")
-                tr_mesh.export(path_to_file, file_type="obj")
+                tr_mesh.export(path_to_file, file_type=file_type)
                 continue
-            # Make the mesh watertight with TSDF Fusion
+
+            # Make the mesh watertight with TSDF Fusion or Manifold Plus
             tr_mesh_watertight = wat_transformer.to_watertight(
-                tr_mesh, path_to_file, file_type="obj"
+                tr_mesh, path_to_file, file_type=file_type
             )
 
             if args.simplify:
@@ -190,6 +174,10 @@ def main(argv):
                     targetfacenum=args.num_target_faces,
                     qualitythr=0.5,
                     preservenormal=True
+                    planarquadric=True,
+                    preservetopology=True,
+                    autoclean=False,  # very important for the
+                                      # watertightness preservation
                 )
                 ms.save_current_mesh(path_to_file)
 

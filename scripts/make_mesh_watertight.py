@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""Script used to ake a single mesh watertight
+"""
 import argparse
 import logging
 import os
@@ -15,10 +17,6 @@ from simple_3dviz import Mesh
 from watertight_transformer import WatertightTransformerFactory
 
 from arguments import add_tsdf_fusion_parameters, add_manifoldplus_parameters
-
-
-def ensure_parent_directory_exists(filepath):
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
 
 def main(argv):
@@ -59,6 +57,11 @@ def main(argv):
         help=("Bounding box to be used for scaling. "
               "By default we use the unit cube")
     )
+    parser.add_argument(
+        "--unit_cube",
+        action="store_true",
+        help="Normalize mesh to fit a unit cube"
+    )
 
     add_tsdf_fusion_parameters(parser)
     add_manifoldplus_parameters(parser)
@@ -97,7 +100,7 @@ def main(argv):
     for pi in tqdm(path_to_meshes):
         file_name = pi.split("/")[-1].split(".")[0]
         path_to_output_file = os.path.join(
-            args.path_to_output_directory, f"{file_name}.obj"
+            args.path_to_output_directory, f"{file_name}_watertight.obj"
         )
         raw_mesh = Mesh.from_file(pi)
         if args.bbox is not None:
@@ -132,7 +135,11 @@ def main(argv):
             ms.meshing_decimation_quadric_edge_collapse(
                 targetfacenum=args.num_target_faces,
                 qualitythr=0.5,
-                preservenormal=True
+                preservenormal=True,
+                planarquadric=True,
+                preservetopology=True,
+                autoclean=False,  # very important for the
+                                  # watertightness preservation
             )
             ms.save_current_mesh(path_to_output_file)
 
